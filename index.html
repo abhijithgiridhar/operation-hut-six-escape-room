@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operation Hut Six</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: wartime codebreaking hut. Sticky timer bar, seven code tabs, one dossier panel at a time. Dark slate with amber and a red TOP SECRET stamp. */
+:root{--bg:#12161a;--panel:#1b2127;--card:#232b33;--line:#3a4650;--text:#e9ecee;--mute:#98a4ad;--amber:#e0a526;--red:#d9503f;--green:#7fb069;--field:#0d1013;--ink:#1a1300;--display:"Special Elite","Courier New",monospace;--body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 var(--body);padding:0 max(16px,env(safe-area-inset-left,0px)) 40px}
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:2px solid var(--line);padding:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:940px;margin:0 auto}
+header h1{font:400 1.1rem var(--display);margin:0;flex:1;min-width:150px;color:var(--amber);letter-spacing:.08em}
+#timer{font:400 1.7rem var(--display);color:var(--green);min-width:90px;text-align:right}
+#timer.low{color:var(--amber)} #timer.crit{color:var(--red)}
+@media (prefers-reduced-motion:no-preference){#timer.crit{animation:p 1s infinite}}
+@keyframes p{50%{opacity:.5}}
+main{max-width:940px;margin:0 auto;padding-top:18px}
+.screen{display:none}.screen.on{display:block}
+h2{font:400 2rem/1.15 var(--display);margin:.2em 0;text-wrap:balance}
+.stamp{display:inline-block;font:400 1rem var(--display);color:var(--red);border:3px solid var(--red);padding:2px 12px;letter-spacing:.2em;transform:rotate(-3deg);margin-bottom:8px}
+.big{font-size:1.15rem}
+button,input[type=number]{font:700 1rem var(--body);cursor:pointer;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--text);padding:10px 16px}
+button:hover:not(:disabled){border-color:var(--amber)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--amber);color:var(--ink);border-color:var(--amber);font-family:var(--display);font-weight:400;letter-spacing:.05em}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:18px}
+.panel h3{font:400 1.35rem var(--display);margin:0 0 4px;color:var(--amber)}
+.cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:14px 0}
+.cast div{background:var(--card);border-left:4px solid var(--amber);padding:10px 12px;font-size:.95rem}
+.cast b{display:block;color:var(--amber)}
+.nav{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 12px}
+.nav button{padding:8px 2px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.74rem}
+.nav .ico{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:2px solid var(--red);color:var(--text);font:400 1.1rem var(--display)}
+.nav button.on{border-color:var(--amber)}
+.nav button.done .ico{background:var(--green);border-color:var(--green);color:var(--ink)}
+.letters{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 14px;color:var(--mute)}
+.slot{width:38px;height:44px;border:2px dashed var(--line);display:grid;place-items:center;font:400 1.4rem var(--display);color:var(--amber)}
+.slot.f{border-style:solid;border-color:var(--green);background:#1b2e1b}
+.story{color:var(--mute);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);padding:12px 14px;margin:12px 0;overflow-wrap:anywhere}
+.card .lbl{font:400 .8rem var(--display);color:var(--amber);letter-spacing:.1em;margin-bottom:4px}
+.task{padding:12px 14px;margin:14px 0;background:#2b2412;border:1px solid var(--amber)}
+input[type=text],input[type=number]{font:700 1rem var(--body);padding:10px 12px;border-radius:8px;border:2px solid var(--line);background:var(--field);color:var(--text);width:100%;max-width:420px;cursor:text}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.opt{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;cursor:pointer}
+.opt input{margin-top:5px;width:18px;height:18px;flex:none}
+.opt:has(input:checked){border-color:var(--amber);background:#2b2412}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;white-space:nowrap}
+th{background:#2a343c}
+.grid td{text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.05rem;padding:6px 0;min-width:34px}
+.grid th{text-align:center;color:var(--amber)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.fb{margin-top:10px;padding:10px 12px;border-radius:8px;display:none;white-space:pre-line;overflow-wrap:anywhere}
+.fb.bad{display:block;background:#3a1914;border:2px solid var(--red)}
+.fb.ok{display:block;background:#1b2e1b;border:2px solid var(--green)}
+.reward{margin-top:12px;padding:12px;border:3px solid var(--amber);background:#2b2412;text-align:center;display:none}
+.reward b{font:400 2.4rem var(--display);color:var(--amber)}
+.final{margin-top:18px;border:3px solid var(--amber)}
+details{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:20px}
+input[type=range]{width:100%;max-width:420px}
+.video{position:relative;aspect-ratio:16/9;max-width:100%;border:3px solid var(--amber);margin-top:16px;background:#000}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.freq{display:flex;flex-wrap:wrap;gap:4px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
+.freq span{background:var(--field);border:1px solid var(--line);padding:2px 6px}
+@media (max-width:560px){h2{font-size:1.5rem}.nav small{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>OPERATION HUT SIX</h1>
+  <div class="mono" id="hintinfo" style="color:var(--mute);font-size:.8rem"></div>
+  <button id="resetBtn" type="button" style="padding:6px 10px;font-size:.8rem;display:none">Reset round</button>
+  <div id="timer">30:00</div>
+</header>
+<main>
+
+<section id="intro" class="screen on">
+  <div style="padding:18px 0">
+    <div class="stamp">TOP SECRET</div>
+    <h2>Bletchley Park, 1941. The Registry is locked.</h2>
+    <p class="big">A convoy of ships sails tonight, and its orders are locked in the Registry safe. Someone inside Hut Six has scrambled the safe's code word. You are the new recruits: <b>codebreakers</b>, like the real teams who worked at Bletchley Park and helped shorten the war.</p>
+    <p class="big">Crack <b>7 codes</b>. Each one gives a <b>secret letter</b>. Put the 7 letters together to open the safe. There are <b>no hints</b>. Think like a codebreaker.</p>
+  </div>
+  <div class="cast">
+    <div><b>Commander Fitch</b>Head of Hut Six. Has not slept in two days.</div>
+    <div><b>Agent Wren</b>A sharp-eyed naval codebreaker.</div>
+    <div><b>Mr. Hastings</b>An officer who always has an answer ready.</div>
+    <div><b>Miss Pemberton</b>A radio operator. Loves a good rumour.</div>
+    <div><b>Daisy</b>The messenger. Runs fast, talks faster.</div>
+  </div>
+  <div class="panel">
+    <h3>Rules of the hut</h3>
+    <ul>
+      <li>Work as a team. Read every dossier card slowly and carefully.</li>
+      <li>Solve the 7 codes in <b>any order</b>. Each reveals one secret letter.</li>
+      <li>Wrong answers cost nothing. There are no hints, so talk it through.</li>
+      <li>Collect all 7 letters, in code order (1 to 7), to open the safe.</li>
+    </ul>
+    <div class="row"><label for="mins"><b>Round timer</b> (minutes, set by facilitator):</label>
+      <input type="number" id="mins" min="1" max="180" step="0.5" value="30" style="width:90px"></div>
+    <div class="row"><label for="startCode">Start code (from your facilitator):</label>
+      <input type="text" id="startCode" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="code" style="max-width:140px"></div>
+    <div class="row"><button class="primary big" id="startBtn">Begin the operation</button></div>
+    <div class="fb" id="startFb"></div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="nav" id="nav"></div>
+  <div class="letters">Secret letters: <span id="slots" style="display:flex;gap:6px"></span></div>
+  <div id="station"></div>
+  <div class="panel final">
+    <h3>The Registry safe</h3>
+    <p class="story">Crack all 7 codes, then type the 7 secret letters <b>in code order (1 to 7)</b> to open the safe.</p>
+    <div class="row">
+      <input type="text" id="finalIn" maxlength="7" placeholder="7 letters" disabled style="max-width:200px;letter-spacing:.25em;text-transform:uppercase" aria-label="Safe code word">
+      <button class="primary" id="finalBtn" disabled>Open the safe</button>
+    </div>
+    <div class="fb" id="finalFb"></div>
+  </div>
+  <details>
+    <summary>Facilitator answer key (password protected)</summary>
+    <div id="lock" style="margin-top:10px">
+      <div class="row"><input type="text" id="tpw" placeholder="Facilitator password" autocomplete="off" aria-label="Facilitator password"><button id="tbtn">Unlock</button></div>
+      <div class="fb" id="tfb"></div>
+    </div>
+    <div id="teacher"></div>
+  </details>
+</section>
+
+<section id="claim" class="screen">
+  <div style="padding:18px 0;text-align:center">
+    <div class="stamp" style="color:var(--green);border-color:var(--green)">MISSION ACCOMPLISHED</div>
+    <h2>The safe is open!</h2>
+    <p class="big" id="winStats"></p>
+    <p class="big">The convoy's orders are decoded and the ships sail safely. Hut Six salutes you. Your reward is playing now...</p>
+    <h2 style="margin-top:20px">You just got Rickrolled!</h2>
+    <p class="big">The real prize: your team cracked 7 codes with no hints. Well done, codebreakers!</p>
+    <div class="video" id="vid"></div>
+    <p class="story" style="margin-top:10px">Video not playing? School networks sometimes block YouTube. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener" style="color:var(--amber)">Open it on YouTube</a>.</p>
+    <div class="row" style="justify-content:center"><button type="button" id="againBtn">Start a new round</button></div>
+  </div>
+</section>
+</main>
+
+<script>
+const DATA = {"morse":".- .-.. .-.. / ... .... .. .--. ... / .... --- .-.. -.. / -.-. --- -.. . / .-- --- .-. -.. / .- - .-.. .- ...","s1":"6757a32f63f102ab55979a44841d5305bab3501fc97998833fd7bbde9d1cdf32","cB":"CQN BNLANC VNNCRWP FRUU KN QNUM JC CQN XUM FRWMVRUU","s2":"8e04da8c0551f9260b44f974b29cb0addbfa7020cad93eae0ee9f947feff6b4e","s3":"566275132dd00f58e7fd0597eedb2640bc42aa5d260ab38aa7889f4ef4c39a80","s4":"5880e25d72d77177cf370ac356ccaacb874e5a0101b1ccedd1080ed0c6721b71","grid":["XADZPEOH","ZOOAUWVG","QOEIORVR","TJFLQOWX","IPYJFLWL","NZLOFNJD","OKLJTHEX","AELMBVHS"],"s5":"ae9adf1c5e4a100388de9d990a0069c3606c32db0914a1f637e13cac317e1e15","s6":"d712aa8b31542c058cede59f36c78052358aa616510fefada1ae3fdbc974ab8a","cC":"WVVJSP","s7":"e61a581812cc7d4d6f4fe3fc9c2eb9c9b8c67208f4572f9e7e3efc0a285de004","start":"a5b2c4617fc815af69a72dca5b1c8f048132ffff9edc700dc950fa8f5b071980","enc":[7,12,3,17,23,19,6],"final":"23883e307df962aa81f66624f755c9bf376bffcb23347506e796b319c3d5a23c","t":{"salt":"YZHbKL3hyBCY/X61syf9aQ==","iv":"EYxTcppI1UcdMtc3","ct":"B1DtNlx8yxJfbsgQN7rRh5O40pOtSNmhdop56YUP5ZDekr5csxZBfLRvywevpOnO1fWDK3isZcLXpyZodIyWcba5Ld2Vy2FXhAy43HfPEVI6tJRw8VtAhbX93SKX+mBrqZW2ok1IaNyFoRlABugoplgeTS2qGDh1sg6CcpP/l4esXiwZjewfxCwaankEQ1L+D4a7k6zAnCb54mmge8oaSCyiqNn6o8POemUJu1dBFy4jTikyqyt+slOivg/2luLX6Sbn/tAst5K6eWTUoFVj9XLuHph5jq8ycgcFxwo1ki9QQwZSXLU4i+TKhEWgpGnTwfjhAYZyHB7OzdAwyKCUZyPqvv8d1f1GtFiLbCw7sp8LUWEFUKg8NBuR9dac2W4ZZI9TxrmuNF6j/10xiGgiBKkdRew//qPo51qgzee+krMJXw1xycEHJikakTXAbq5tIp+js1+JKzzPPb63i40SlON8SbT9KfphShT0/Y7zPk/Mm880OAWLcw86MRbCqBAe5ALzOHzyzFZqN9Om5tPuO6UgFCBEkMImiOWiYhkmAHLjNel+8ZOxDTlIL8LOsooW1oJ8zkXBr8vcnROPYXUZgCrnkahQbPZudsF0U/CH6DZZtXlisMrFaFf8+eFtgz99OlI/DoT7Wk8mXZ9Z1tzRTqEA1efHgBGIiHTbWgAczORFsskHLEe7q/oij42u11CEYQtov0ACNUArDBPEoX5KJWv6cLHuoi8uHLFusfPWE+jcOjOmGMCj4xX0/eb+yzVg2xpX8ZoaB9mw+VSkSIlOkAA+YH0BUmdw0Zztvv+5PM8Ac2Sq+t8t+92qwaHekb8zm+znxcjcZ/H9hcqIizm2HknYvHkh+TUMmd8c2fNPzXffPbbGV98C7iEgJhvy+QYVM2nllp1UiO5KbEbeXWZSJfOWg/CFyIHsN9xQOLR/4FHdSI5pri+FRcyqsHbZX0KL+jMmesXg77GjSBOOfhKLuTQGt+fuAqGfRhmNdoTIJsHJKm27DfE9QqSuj/fBo5X7PKnOci5XG8sXd3ClKem1+G/UVwxDvQh2GyA1Fri2b/fj7SID9JBhf20oNqlPTDZeiNoZKnLvFm73T8XzgN6uFbRQVuj1tLtGlglU088ycmrmDpxiArjS73Crgw2ob71cM7EhiDXZ4VuAJLhGSeQPj2UhWGMXfoxZtNYZIqFOZ4txVQ+dwx2ExDQyl0PyIEDhPKaG77M3MN6VCmOvorsuhirncQO5hOSlYmbyLlHydiht9x8c+TjkDRVd5d7EFibKqxaUVE3o3tAYgTXwZhNspGsqoVlUocVEO5yAZBl5xuVUt+j5jvHG3BFwDiqeuQN8wS07Mc1T6rdSD45YWXBdnafCtla6gSRknvHgocAatbGrn9Dknaxm558veBMbnXffUj1IjLK2/tJNkRhvnUbwEzwE2HFliFcDbv2KerNCCuSXkCX0Rsu1BSg7J0tpXHUCjkkAYzapluA1+sGk4lcPXGWHZqLrkiHubcv7ne8hlGuMiqhSX7zhDzTreDG3Js+XDOnBFqv1hCgE1QpYE15ZkIwi9PcVjKlQQd7QBUzf7WdPUQ2XqVBK8kN36Aon+nXaTr3WCzA5DM0uI2yUNq+fYckupVmyNH0t5i5RFodvD9EeZPpaLMVO76twi5/uneRouYQA/zOWuJBWKd3q5F4nNt6UJE3lMhS1ZD8BgUhIe7Wt0GzygBBrWtuEI3fnWn+ZWaa7H6Yy5e+haHgBnujfOEYrMGlw1lvoV2rmh+l+aHMf556y+8XwfRH2+0VFodcGhlNNCIvAD8Z2h92zgFvlR83J9xDHeYTs","iter":200000}};
+const $ = s => document.querySelector(s);
+const norm = s => s.trim().toLowerCase().replace(/\s+/g,' ');
+function caesar(t, k){ return t.replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0)-65+k)%26+26)%26+65)); }
+function sha256(msg){
+  const b=unescape(encodeURIComponent(msg));
+  const primes=[];for(let n=2;primes.length<64;n++){if(primes.every(p=>n%p))primes.push(n);}
+  const fr=x=>((x-Math.floor(x))*4294967296)>>>0;
+  const K=primes.map(p=>fr(Math.cbrt(p)));
+  let Hh=primes.slice(0,8).map(p=>fr(Math.sqrt(p)));
+  const by=[];for(let i=0;i<b.length;i++)by.push(b.charCodeAt(i));
+  const l=by.length*8; by.push(0x80); while(by.length%64!==56)by.push(0);
+  for(let i=7;i>=0;i--)by.push(i>3?0:(l>>>(i*8))&255);
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<by.length;o+=64){
+    const w=[];for(let i=0;i<16;i++)w[i]=(by[o+4*i]<<24|by[o+4*i+1]<<16|by[o+4*i+2]<<8|by[o+4*i+3])>>>0;
+    for(let i=16;i<64;i++){const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3);const s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+    let [a,b2,c,d,e,f,g,h]=Hh;
+    for(let i=0;i<64;i++){
+      const S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])>>>0;
+      const S0=rotr(a,2)^rotr(a,13)^rotr(a,22), maj=(a&b2)^(a&c)^(b2&c), t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b2;b2=a;a=(t1+t2)>>>0;
+    }
+    Hh=Hh.map((x,i)=>(x+[a,b2,c,d,e,f,g,h][i])>>>0);
+  }
+  return Hh.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+
+
+const H = t => sha256('opl3|'+t);
+const letterFor = (sid,key) => String.fromCharCode(65 + (DATA.enc[sid-1] + parseInt(H('k'+sid+'|'+key).slice(0,6),16)%26) % 26);
+
+const MORSE_CHART = {A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..'};
+const SPIES = ['Agent Wren','Mr. Hastings','Miss Pemberton','Daisy'];
+const EVENTS = [
+  ['O','VE Day: Victory in Europe is celebrated','8 May 1945'],
+  ['Y','Attack on Pearl Harbor','7 December 1941'],
+  ['T','D-Day: Allied landings in Normandy','6 June 1944'],
+  ['C','Evacuation of Dunkirk','26 May to 4 June 1940'],
+  ['P','German Sixth Army surrenders at Stalingrad','2 February 1943'],
+  ['R','Battle of Britain (air battle over southern England)','10 July to 31 October 1940']
+];
+
+const stations = [
+ { id:1, name:'Morse Intercept', ico:'1',
+   story:'Radio operators intercepted a message tapped out in Morse code. Dots and dashes make letters. A slash (/) means a gap between words.',
+   cards:[
+     ['Intercepted signal','<span class="mono big" id="morse"></span>'],
+     ['Morse code chart','<div class="mono" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:2px 8px;font-size:.9rem">'+Object.entries(MORSE_CHART).map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join('')+'</div>']],
+   task:'Decode the message. What is the code word at the end?',
+   ui:()=>`<div class="row"><input type="text" id="a" placeholder="code word" autocomplete="off" aria-label="Code word"><button class="primary" data-check>Check</button></div>`,
+   after(){ $('#morse').textContent=DATA.morse; },
+   check(){
+     const v=norm($('#a').value);
+     if(H('s1:'+v)===DATA.s1) return {ok:true,key:v,msg:'Decoded! Morse code was invented in the 1830s and 1840s and was used by radio operators all through the war. In 1941 the code word ATLAS meant "all ships hold position".'};
+     return {ok:false,msg:'Not the word. Decode letter by letter using the chart. The code word is the last word.'};
+   }},
+
+ { id:2, name:'Caesar Crack', ico:'2',
+   story:'Another message, but this time nobody knows the key! Julius Caesar used a "shift" cipher, where every letter moves along the alphabet by the same secret number. Codebreakers crack these with <b>frequency analysis</b>: in English, the letter <b>E</b> appears more than any other.',
+   cards:[
+     ['Encrypted message','<span class="mono big" id="cipher"></span>'],
+     ['Letter counts in the message (counted for you)','<div class="freq" id="freq"></div>'],
+     ['Codebreaker\'s tip','The most common letter in the message probably stands for <b>E</b>. Work out how far that letter was shifted. Then slide the decoder to that number.']],
+   task:'Decode the message. Where is the secret meeting? (one word)',
+   ui:()=>`<div class="row"><span>Shift back by:</span> <input type="range" id="shift" min="0" max="25" value="0" aria-label="Shift amount"> <b class="mono" id="shiftV">0</b></div>
+   <div class="card"><div class="lbl">DECODER PREVIEW</div><span class="mono" id="decoded"></span></div>
+   <div class="row"><input type="text" id="a" placeholder="the place" autocomplete="off" aria-label="Place"><button class="primary" data-check>Check</button></div>`,
+   after(){
+     $('#cipher').textContent=DATA.cB;
+     const cnt={}; for(const ch of DATA.cB) if(/[A-Z]/.test(ch)) cnt[ch]=(cnt[ch]||0)+1;
+     $('#freq').innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span>${k}:${v}</span>`).join('');
+     const upd=()=>{const k=+$('#shift').value;$('#shiftV').textContent=k;$('#decoded').textContent=caesar(DATA.cB,-k);};
+     $('#shift').oninput=upd; upd();
+   },
+   check(){
+     const v=norm($('#a').value);
+     if(H('s2:'+v)===DATA.s2) return {ok:true,key:v,msg:'Cracked! Frequency analysis is how real codebreakers beat simple ciphers. It works because every language has a "fingerprint" of letter frequencies.'};
+     return {ok:false,msg:'Not yet. Which letter appears most often? If that is E, count how many steps it moved.'};
+   }},
+
+ { id:3, name:'Convoy Calculations', ico:'3',
+   story:'The navy needs to know when the convoy will arrive so a welcome party can be ready. Ships in a convoy must sail together, so the whole convoy can only go as fast as its slowest ship.',
+   cards:[
+     ['Convoy ships and top speeds','Ship A: <b>9 knots</b> · Ship B: <b>12 knots</b> · Ship C: <b>6 knots</b> · Ship D: <b>10 knots</b>'],
+     ['Navy notes','1 knot = 1 nautical mile per hour. The route is <b>2,160 nautical miles</b>. The convoy sails non-stop, day and night, and leaves at <b>06:00 on Monday</b>.'],
+     ['Port report','After arriving, the convoy must wait <b>one full day</b> for harbour clearance before docking.']],
+   task:'On which day of the week does the convoy dock?',
+   ui:()=>`<div class="row"><input type="text" id="a" placeholder="day of the week" autocomplete="off" aria-label="Day"><button class="primary" data-check>Check</button></div>`,
+   check(){
+     const v=norm($('#a').value);
+     if(H('s3:'+v)===DATA.s3) return {ok:true,key:v,msg:'Right! The convoy sails at the speed of its slowest ship: 6 knots. 2,160 ÷ 6 = 360 hours = 15 days. Monday 06:00 plus 15 days is Tuesday 06:00, plus 1 day waiting makes Wednesday.'};
+     return {ok:false,msg:'Not quite. Which speed counts? Then divide distance by speed, turn hours into days, and count on from Monday. Do not forget the waiting day.'};
+   }},
+
+ { id:4, name:'Timeline Tangle', ico:'4',
+   story:'Hut Six keeps a wall of important events, but a gust of wind blew every card off. Each card has a secret letter on it. Put the events back in the order they happened and the letters will spell a word.',
+   cards:[
+     ['Event cards (in a jumbled pile)','<div class="tw"><table><tr><th>Letter</th><th>Event</th><th>When</th></tr>'+EVENTS.map(e=>`<tr><td><b>${e[0]}</b></td><td style="white-space:normal">${e[1]}</td><td>${e[2]}</td></tr>`).join('')+'</table></div>']],
+   task:'Type the six letters in order from the EARLIEST event to the LATEST. What word do they spell?',
+   ui:()=>`<div class="row"><input type="text" id="a" placeholder="the word" autocomplete="off" aria-label="Word"><button class="primary" data-check>Check</button></div>`,
+   check(){
+     const v=norm($('#a').value);
+     if(H('s4:'+v)===DATA.s4) return {ok:true,key:v,msg:'Correct! Dunkirk, Battle of Britain, Pearl Harbor, Stalingrad, D-Day, VE Day. The word is CRYPTO, short for cryptography: the science of secret codes.'};
+     return {ok:false,msg:'Not a word yet. Put the dates in order first. Watch out for events in the same year.'};
+   }},
+
+ { id:5, name:'Map Grid Code', ico:'5',
+   story:'A captured map shows a grid of random-looking letters. Agents hid a word in it. The coordinates arrive by radio, one at a time, in order.',
+   cards:[
+     ['Radio coordinates (in order)','<span class="mono big">C3 · F6 · A5 · H2 · D8 · B1</span>'],
+     ['How to read a coordinate','The <b>letter</b> is the column across the top. The <b>number</b> is the row, counted from the top. So C3 means column C, row 3.'],
+     ['The map','<div class="tw"><table class="grid" id="grid"></table></div>']],
+   task:'Read the letter at each coordinate, in order. What word do they spell?',
+   ui:()=>`<div class="row"><input type="text" id="a" placeholder="the word" autocomplete="off" aria-label="Word"><button class="primary" data-check>Check</button></div>`,
+   after(){
+     const cols='ABCDEFGH';
+     $('#grid').innerHTML='<tr><th></th>'+[...cols].map(c=>`<th>${c}</th>`).join('')+'</tr>'+DATA.grid.map((r,i)=>`<tr><th>${i+1}</th>`+[...r].map(ch=>`<td>${ch}</td>`).join('')+'</tr>').join('');
+   },
+   check(){
+     const v=norm($('#a').value);
+     if(H('s5:'+v)===DATA.s5) return {ok:true,key:v,msg:'Yes! ENIGMA. The German Enigma machine scrambled messages using spinning rotors. Breaking it was one of the great achievements of the war.'};
+     return {ok:false,msg:'Not yet. Column letter across the top, row number down the side. Check each coordinate carefully.'};
+   }},
+
+ { id:6, name:'Find the Spy', ico:'6',
+   story:'One of the four people in Hut Six is a spy. The spy ALWAYS lies. The other three ALWAYS tell the truth. Each made one statement.',
+   cards:[
+     ['Statements','<b>Agent Wren:</b> "Mr. Hastings is the spy."<br><b>Mr. Hastings:</b> "Miss Pemberton is the spy."<br><b>Miss Pemberton:</b> "Mr. Hastings is lying."<br><b>Daisy:</b> "I am not the spy."'],
+     ['Rule of the puzzle','There is exactly <b>one</b> spy. The spy lies in everything they say. Everyone else is always honest.']],
+   task:'Who is the spy? Test each person: if they were the spy, would everyone\'s statements still make sense?',
+   ui:()=>SPIES.map((s,i)=>`<label class="opt"><input type="radio" name="sus" value="${i}"><span>${s}</span></label>`).join('')+`<div class="row"><button class="primary" data-check>Arrest this person</button></div>`,
+   check(){
+     const r=document.querySelector('input[name=sus]:checked'); if(!r) return {ok:false,msg:'Pick a person first.'};
+     if(H('s6:'+r.value)===DATA.s6) return {ok:true,key:r.value,msg:'Caught! If Mr. Hastings is the spy, he lies about Pemberton, Wren tells the truth about him, Pemberton truthfully says he is lying, and Daisy is truthful. Every other choice causes a contradiction.'};
+     return {ok:false,msg:'That choice creates a contradiction. Assume they are the spy, then check each person\'s statement against the rule.'};
+   }},
+
+ { id:7, name:'Enigma Shift', ico:'7',
+   story:'The last message is the hardest. It is like a mini Enigma machine: instead of one shift for the whole message, <b>every letter is shifted by a different amount</b>. The secret key is a number sequence.',
+   cards:[
+     ['Encrypted word','<span class="mono big" id="eword"></span>'],
+     ['The key','The shifts are the first six digits of <b>pi</b>: 3.14159. So the first letter was moved forward 3, the second 1, the third 4, the fourth 1, the fifth 5, the sixth 9.'],
+     ['Alphabet strip','<span class="mono">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</span> (after Z, go back to A)'],
+     ['How to decode','Move each letter <b>BACK</b> by its own number. Example: with shift 3, the letter D was originally A.']],
+   task:'Decode the word. Who was the famous codebreaker whose surname is the answer? (Hut Six\'s hero)',
+   ui:()=>`<div class="row"><input type="text" id="a" placeholder="surname" autocomplete="off" aria-label="Surname"><button class="primary" data-check>Check</button></div>`,
+   after(){ $('#eword').textContent=DATA.cC; },
+   check(){
+     const v=norm($('#a').value);
+     if(H('s7:'+v)===DATA.s7) return {ok:true,key:v,msg:'TURING! Alan Turing led the team that designed machines to crack Enigma. Together, the codebreakers at Bletchley Park are credited with shortening the war and saving many lives.'};
+     return {ok:false,msg:'Not yet. Do the letters one at a time: first letter back 3, second back 1, third back 4, and so on.'};
+   }}
+];
+
+/* ===== State & timer ===== */
+let deadline=0, solved={}, letters={}, current=0, timer=null, timeUpShown=false;
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id)); window.scrollTo(0,0); }
+function fmt(ms){ ms=Math.max(0,ms); const s=Math.ceil(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function tick(){
+  const left=deadline-Date.now(); const t=$('#timer');
+  t.textContent=left>=0?fmt(left):'+'+fmt(-left);
+  t.className=left<180000?'crit':left<600000?'low':'';
+  if(left<=0&&!timeUpShown){ timeUpShown=true; $('#hintinfo').textContent='Time is up! Keep going if you can.'; }
+}
+function renderNav(){
+  $('#nav').innerHTML=stations.map((s,i)=>`<button class="${i===current?'on':''} ${solved[s.id]?'done':''}" data-go="${i}"><span class="ico">${solved[s.id]?letters[s.id]:s.ico}</span><small>${s.name}</small></button>`).join('');
+  $('#slots').innerHTML=stations.map(s=>`<span class="slot ${solved[s.id]?'f':''}">${solved[s.id]?letters[s.id]:'?'}</span>`).join('');
+  const all=stations.every(s=>solved[s.id]);
+  $('#finalIn').disabled=!all; $('#finalBtn').disabled=!all;
+}
+function renderStation(){
+  const s=stations[current];
+  $('#station').innerHTML=`<div class="panel">
+    <h3>Code ${s.id}: ${s.name}</h3>
+    <p class="story">${s.story}</p>
+    ${s.cards.map(c=>`<div class="card"><div class="lbl">DOSSIER · ${c[0].toUpperCase()}</div>${c[1]}</div>`).join('')}
+    <div class="task"><b>Your task:</b> ${s.task}</div>
+    <div id="ui">${s.ui()}</div>
+    <div class="fb" id="fb"></div>
+    <div class="reward" id="reward">Secret letter from code ${s.id}<br><b id="rd"></b></div>
+  </div>`;
+  if(s.after) s.after();
+  if(solved[s.id]) markSolved(s,'Already solved.');
+  const cb=document.querySelector('[data-check]');
+  if(cb) cb.onclick=()=>{
+    const r=s.check(); const fb=$('#fb');
+    if(r.ok){ solved[s.id]=true; letters[s.id]=letterFor(s.id,r.key); markSolved(s,r.msg); renderNav(); }
+    else{ fb.className='fb bad'; fb.textContent='Not yet. '+r.msg; }
+  };
+  document.querySelectorAll('#ui input[type=text]').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&cb) cb.click(); }));
+}
+function markSolved(s,msg){
+  const fb=$('#fb'); fb.className='fb ok'; fb.textContent='Solved! '+msg;
+  $('#rd').textContent=letters[s.id]; $('#reward').style.display='block';
+}
+
+/* ===== Facilitator key: AES-GCM, key from password (PBKDF2) ===== */
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function unlockTeacher(){
+  const fb=$('#tfb');
+  try{
+    if(!(window.crypto&&crypto.subtle)) throw new Error('nocrypto');
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode($('#tpw').value),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(DATA.t.salt),iterations:DATA.t.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(DATA.t.iv)},key,b64(DATA.t.ct));
+    $('#teacher').innerHTML=new TextDecoder().decode(pt); $('#lock').style.display='none';
+  }catch(e){
+    fb.className='fb bad'; fb.textContent=(e&&e.message==='nocrypto')?'This browser cannot decrypt here (needs a secure connection).':'Wrong password.';
+  }
+}
+$('#tbtn').onclick=unlockTeacher;
+$('#tpw').addEventListener('keydown',e=>{ if(e.key==='Enter') unlockTeacher(); });
+
+/* ===== Wiring ===== */
+$('#startCode').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#startBtn').click(); });
+$('#startBtn').onclick=()=>{
+  if(H('start:'+$('#startCode').value.trim())!==DATA.start){ const f=$('#startFb'); f.className='fb bad'; f.textContent='Wrong start code. Ask your facilitator.'; return; }
+  const mins=Math.min(180,Math.max(0.5,parseFloat($('#mins').value)||30));
+  $('#resetBtn').style.display='';
+  deadline=Date.now()+mins*60000; timer=setInterval(tick,500); tick();
+  show('game'); renderNav(); renderStation();
+};
+$('#nav').addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(!b) return; current=+b.dataset.go; renderNav(); renderStation(); });
+$('#finalBtn').onclick=()=>{
+  const fb=$('#finalFb'); const typed=$('#finalIn').value.trim().toUpperCase();
+  if(H('final:'+typed)===DATA.final){
+    clearInterval(timer);
+    const left=deadline-Date.now();
+    $('#winStats').innerHTML=left>=0?'Safe opened with <b>'+fmt(left)+'</b> to spare':'Safe opened <b>'+fmt(-left)+'</b> over time';
+    show('claim');
+    $('#vid').innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0" title="Your reward" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+  } else { fb.className='fb bad'; fb.textContent='The safe stays shut. Type the 7 letters in code order, 1 to 7.'; }
+};
+$('#finalIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#finalBtn').click(); });
+$('#againBtn').onclick=()=>location.reload();
+let rArm=false;
+$('#resetBtn').onclick=()=>{ const b=$('#resetBtn'); if(!rArm){ rArm=true; b.textContent='Click again to confirm'; setTimeout(()=>{rArm=false;b.textContent='Reset round';},3000);} else location.reload(); };
+</script>
+</body>
+</html>
